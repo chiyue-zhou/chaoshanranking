@@ -1,0 +1,1002 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>潮汕美食排行榜 - 用户投票系统</title>
+    <!-- Google Fonts: Noto Sans SC (思源黑体，免费可商用) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        :root {
+            --primary: #8B4513;
+            --primary-light: #A0522D;
+            --secondary: #D2691E;
+            --bg: #f8f5f0;
+            --card-bg: #ffffff;
+            --text: #333333;
+            --text-light: #666666;
+            --border: #e0d5c8;
+            --success: #27ae60;
+            --warning: #f39c12;
+            --info: #3498db;
+        }
+        
+        body {
+            background-color: var(--bg);
+            font-family: 'Noto Sans SC', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+            color: var(--text);
+            line-height: 1.6;
+            padding-bottom: 2rem;
+        }
+        
+        /* 头部 */
+        .header {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            color: white;
+            padding: 1.5rem 1rem;
+            text-align: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .header h1 {
+            font-size: 1.5rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .header p {
+            opacity: 0.9;
+            font-size: 0.9rem;
+        }
+        
+        /* 标签页切换 */
+        .tabs {
+            display: flex;
+            background: white;
+            border-bottom: 1px solid var(--border);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        
+        .tab {
+            flex: 1;
+            padding: 1rem;
+            text-align: center;
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s;
+            font-weight: 500;
+            font-size: 0.9rem;
+        }
+        
+        .tab.active {
+            color: var(--primary);
+            border-bottom-color: var(--primary);
+        }
+        
+        .tab:hover {
+            background: rgba(139, 69, 19, 0.05);
+        }
+        
+        /* 内容区域 */
+        .content {
+            display: none;
+            padding: 1rem;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        
+        .content.active {
+            display: block;
+        }
+        
+        /* 提示卡片 */
+        .info-card {
+            background: linear-gradient(135deg, #fff9e6 0%, #fff3cd 100%);
+            border-left: 4px solid var(--warning);
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            font-size: 0.9rem;
+        }
+        
+        .info-card strong {
+            color: var(--primary);
+        }
+        
+        /* 用户输入区 */
+        .user-section {
+            background: white;
+            padding: 1rem;
+            border-radius: 12px;
+            margin-bottom: 1rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+        
+        .user-section label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            color: var(--primary);
+        }
+        
+        .user-section input {
+            width: 100%;
+            padding: 0.8rem 1rem;
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.3s;
+        }
+        
+        .user-section input:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+        
+        /* 排名输入列表 */
+        .ranking-list {
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+        
+        .ranking-item {
+            display: flex;
+            align-items: center;
+            padding: 0.8rem 1rem;
+            border-bottom: 1px solid var(--border);
+            transition: background 0.2s;
+        }
+        
+        .ranking-item:hover {
+            background: #faf8f5;
+        }
+        
+        .ranking-item:last-child {
+            border-bottom: none;
+        }
+        
+        .item-number {
+            width: 28px;
+            height: 28px;
+            background: var(--primary);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+            font-weight: bold;
+            margin-right: 0.8rem;
+            flex-shrink: 0;
+        }
+        
+        .item-info {
+            flex: 1;
+            min-width: 0;
+        }
+        
+        .item-name {
+            font-weight: 500;
+            font-size: 0.95rem;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
+        .item-desc {
+            font-size: 0.75rem;
+            color: var(--text-light);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
+        .rank-input {
+            width: 70px;
+            padding: 0.5rem;
+            border: 2px solid var(--border);
+            border-radius: 6px;
+            text-align: center;
+            font-size: 1rem;
+            font-weight: bold;
+            color: var(--primary);
+        }
+        
+        .rank-input:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+        
+        .rank-input.error {
+            border-color: #e74c3c;
+            background: #fdf2f2;
+        }
+        
+        /* 按钮 */
+        .btn {
+            display: block;
+            width: 100%;
+            padding: 1rem;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 1rem;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(139, 69, 19, 0.3);
+        }
+        
+        .btn:active {
+            transform: translateY(0);
+        }
+        
+        .btn-secondary {
+            background: linear-gradient(135deg, #6c757d 0%, #495057 100%);
+        }
+        
+        .btn-success {
+            background: linear-gradient(135deg, var(--success) 0%, #2ecc71 100%);
+        }
+        
+        .btn-group {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 1rem;
+        }
+        
+        .btn-group .btn {
+            margin-top: 0;
+            flex: 1;
+        }
+        
+        /* 排行榜结果 */
+        .result-section {
+            background: white;
+            border-radius: 12px;
+            padding: 1rem;
+            margin-top: 1rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+        
+        .result-title {
+            font-size: 1.1rem;
+            color: var(--primary);
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid var(--border);
+        }
+        
+        .rank-result-item {
+            display: flex;
+            align-items: center;
+            padding: 0.8rem;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(135deg, #faf8f5 0%, #f5f0e8 100%);
+            border-radius: 10px;
+            border-left: 4px solid var(--primary);
+        }
+        
+        .rank-result-item.top3 {
+            background: linear-gradient(135deg, #fff9e6 0%, #ffefc2 100%);
+            border-left-color: var(--warning);
+        }
+        
+        .rank-number {
+            width: 36px;
+            height: 36px;
+            background: var(--primary);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+            font-weight: bold;
+            margin-right: 0.8rem;
+            flex-shrink: 0;
+        }
+        
+        .rank-result-item.top3 .rank-number {
+            background: var(--warning);
+        }
+        
+        .rank-content {
+            flex: 1;
+            min-width: 0;
+        }
+        
+        .rank-name {
+            font-weight: bold;
+            font-size: 1rem;
+        }
+        
+        .rank-score {
+            font-size: 0.8rem;
+            color: var(--text-light);
+        }
+        
+        .rank-user-score {
+            font-size: 0.9rem;
+            color: var(--primary);
+            font-weight: bold;
+        }
+        
+        /* 统计卡片 */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 0.8rem;
+            margin-bottom: 1rem;
+        }
+        
+        .stat-card {
+            background: white;
+            padding: 1rem;
+            border-radius: 10px;
+            text-align: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+        
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: var(--primary);
+        }
+        
+        .stat-label {
+            font-size: 0.8rem;
+            color: var(--text-light);
+            margin-top: 0.3rem;
+        }
+        
+        /* 对比视图 */
+        .compare-item {
+            background: white;
+            border-radius: 10px;
+            padding: 1rem;
+            margin-bottom: 0.8rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+        
+        .compare-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+        
+        .compare-name {
+            font-weight: bold;
+            font-size: 1rem;
+        }
+        
+        .compare-ranks {
+            display: flex;
+            gap: 1rem;
+            font-size: 0.85rem;
+        }
+        
+        .compare-personal {
+            color: var(--info);
+        }
+        
+        .compare-global {
+            color: var(--success);
+        }
+        
+        .compare-bar {
+            height: 8px;
+            background: var(--bg);
+            border-radius: 4px;
+            overflow: hidden;
+            margin-top: 0.5rem;
+        }
+        
+        .compare-bar-fill {
+            height: 100%;
+            border-radius: 4px;
+            transition: width 0.5s;
+        }
+        
+        .compare-bar-fill.personal {
+            background: var(--info);
+        }
+        
+        .compare-bar-fill.global {
+            background: var(--success);
+        }
+        
+        /* 用户列表 */
+        .user-list {
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+        
+        .user-list-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.8rem 1rem;
+            border-bottom: 1px solid var(--border);
+        }
+        
+        .user-list-item:last-child {
+            border-bottom: none;
+        }
+        
+        .user-name {
+            font-weight: 500;
+        }
+        
+        .user-time {
+            font-size: 0.8rem;
+            color: var(--text-light);
+        }
+        
+        /* 错误提示 */
+        .error-msg {
+            color: #e74c3c;
+            font-size: 0.85rem;
+            margin-top: 0.5rem;
+            display: none;
+        }
+        
+        .error-msg.show {
+            display: block;
+        }
+        
+        /* 空状态 */
+        .empty-state {
+            text-align: center;
+            padding: 3rem 1rem;
+            color: var(--text-light);
+        }
+        
+        .empty-state-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            opacity: 0.5;
+        }
+        
+        /* 动画 */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .fade-in {
+            animation: fadeIn 0.3s ease;
+        }
+        
+        /* 响应式 */
+        @media (min-width: 768px) {
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .stats-grid {
+                grid-template-columns: repeat(4, 1fr);
+            }
+            
+            .ranking-item {
+                padding: 1rem 1.2rem;
+            }
+            
+            .item-name {
+                font-size: 1.05rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 头部 -->
+    <div class="header">
+        <h1>🏆 潮汕美食排行榜</h1>
+        <p>为你喜欢的美食投票，生成专属排行榜</p>
+    </div>
+    
+    <!-- 标签页 -->
+    <div class="tabs">
+        <div class="tab active" onclick="switchTab('vote')">🗳️ 投票</div>
+        <div class="tab" onclick="switchTab('personal')">📊 用户排行</div>
+        <div class="tab" onclick="switchTab('global')">🏅 总排行榜</div>
+        <div class="tab" onclick="switchTab('compare')">🆚 对比</div>
+    </div>
+    
+    <!-- 投票页面 -->
+    <div id="vote" class="content active">
+        <div class="info-card">
+            <strong>📋 投票说明：</strong>为每道美食输入排名数字（1-50），1代表最喜欢，50代表最不喜欢。每个数字只能使用一次。
+        </div>
+        
+        <div class="user-section">
+            <label>👤 你的昵称</label>
+            <input type="text" id="username" placeholder="请输入你的昵称" maxlength="20">
+        </div>
+        
+        <div class="ranking-list" id="rankingList">
+            <!-- 动态生成 -->
+        </div>
+        
+        <div class="error-msg" id="errorMsg"></div>
+        
+        <button class="btn" onclick="submitVote()">✅ 提交投票</button>
+        <button class="btn btn-secondary" onclick="resetVote()">🔄 重置</button>
+    </div>
+    
+    <!-- 个人排行页面 -->
+    <div id="personal" class="content">
+        <div class="user-section">
+            <label>查看用户排行</label>
+            <select id="userSelect" onchange="showPersonalRank()" style="width:100%;padding:0.8rem;border:2px solid var(--border);border-radius:8px;font-size:1rem;">
+                <option value="">请选择用户...</option>
+            </select>
+        </div>
+        
+        <div id="personalResult"></div>
+    </div>
+    
+    <!-- 总排行榜页面 -->
+    <div id="global" class="content">
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-value" id="totalUsers">0</div>
+                <div class="stat-label">参与人数</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="totalItems">50</div>
+                <div class="stat-label">美食总数</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="avgRank">-</div>
+                <div class="stat-label">平均排名</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="topVoted">-</div>
+                <div class="stat-label">最受欢迎</div>
+            </div>
+        </div>
+        
+        <div class="result-section">
+            <div class="result-title">🏆 总排行榜（按平均排名）</div>
+            <div id="globalResult"></div>
+        </div>
+        
+        <div class="result-section">
+            <div class="result-title">👥 参与用户列表</div>
+            <div class="user-list" id="userList"></div>
+        </div>
+    </div>
+    
+    <!-- 对比页面 -->
+    <div id="compare" class="content">
+        <div class="user-section">
+            <label>选择用户进行对比</label>
+            <select id="compareUserSelect" onchange="showCompare()" style="width:100%;padding:0.8rem;border:2px solid var(--border);border-radius:8px;font-size:1rem;">
+                <option value="">请选择用户...</option>
+            </select>
+        </div>
+        
+        <div id="compareResult"></div>
+    </div>
+
+    <script>
+        // ==================== 数据 ====================
+        
+        // 美食数据（50个）
+        const foodData = [
+            { id: 1, name: "潮汕牛肉火锅", desc: "现宰现切，清汤锅底，突出牛肉本味" },
+            { id: 2, name: "潮汕卤鹅", desc: "国家级非遗，澄海狮头鹅，卤香浓郁" },
+            { id: 3, name: "手打牛肉丸", desc: "手工捶打40分钟，弹嫩多汁" },
+            { id: 4, name: "蚝烙", desc: "新鲜珠蚝+红薯粉浆，外酥里嫩" },
+            { id: 5, name: "潮汕生腌", desc: "活海鲜腌渍，口感滑嫩如啫喱" },
+            { id: 6, name: "潮汕肠粉", desc: "皮薄馅多，卤汁浓郁" },
+            { id: 7, name: "粿汁", desc: "唐代传承，卤香醇厚" },
+            { id: 8, name: "珠蚝蚝烙", desc: "小珠蚝密集蚝香，老市区风味" },
+            { id: 9, name: "生腌虾蟹", desc: "蟹肉如啫喱，沿海极致鲜食" },
+            { id: 10, name: "潮汕砂锅粥", desc: "虾蟹慢熬，粥底绵密浓稠" },
+            { id: 11, name: "普宁豆干", desc: "外皮酥脆，内里嫩滑如布丁" },
+            { id: 12, name: "达濠鱼丸", desc: "手工捶打，洁白弹滑" },
+            { id: 13, name: "鸭母捻", desc: "潮汕汤圆，形似母鸭浮水" },
+            { id: 14, name: "猪肠胀糯米", desc: "软糯咸香，油脂与米香交融" },
+            { id: 15, name: "潮汕鱼饭", desc: "盐水煮海鱼，保留本鲜" },
+            { id: 16, name: "隆江猪脚饭", desc: "软糯脱骨，卤香浓郁" },
+            { id: 17, name: "糖葱薄饼", desc: "饼皮裹糖葱，怀旧美味" },
+            { id: 18, name: "无米粿", desc: "番薯粉做皮，煎至金黄" },
+            { id: 19, name: "甘草水果", desc: "酸甜带甘，清爽开胃" },
+            { id: 20, name: "乒乓粿", desc: "广东省非遗，软糯香甜" },
+            { id: 21, name: "潮汕粿条汤", desc: "清汤配粿条，加肉丸瘦肉，早餐首选" },
+            { id: 22, name: "潮州春饼", desc: "薄饼皮卷豆芽韭菜肉丝，外酥里嫩" },
+            { id: 23, name: "咸水粿", desc: "米浆做盏，放菜脯粒，咸香可口" },
+            { id: 24, name: "菜头粿", desc: "萝卜糕外脆里软，配辣椒酱" },
+            { id: 25, name: "芋头粿", desc: "芋头丝与米粉蒸制，外酥内糯" },
+            { id: 26, name: "笋粿", desc: "春笋丁做馅，清爽鲜美" },
+            { id: 27, name: "韭菜粿", desc: "韭菜香浓，皮薄馅多" },
+            { id: 28, name: "鼠曲粿", desc: "鼠曲草做皮，豆沙或糯米馅" },
+            { id: 29, name: "红桃粿", desc: "寿桃造型，糯米饭馅，喜庆吉祥" },
+            { id: 30, name: "朴籽粿", desc: "朴籽叶汁做，清明节传统点心" },
+            { id: 31, name: "酵粿桃", desc: "发酵米浆蒸制，配花生碎甜酱" },
+            { id: 32, name: "潮州卷煎", desc: "腐皮卷肉，蒸后切片食用" },
+            { id: 33, name: "双烹粽球", desc: "一头甜一头咸，双拼口味" },
+            { id: 34, name: "腐乳饼", desc: "潮式月饼，腐乳南乳肉馅" },
+            { id: 35, name: "朥饼", desc: "传统猪油月饼，皮薄馅厚" },
+            { id: 36, name: "老婆饼", desc: "冬瓜蓉馅，酥皮点心" },
+            { id: 37, name: "宝斗饼", desc: "形似骰子，绿豆沙馅，清甜不腻" },
+            { id: 38, name: "束砂", desc: "花生裹糖霜，传统茶点" },
+            { id: 39, name: "落汤钱", desc: "糯米粉团，煮后裹花生糖粉" },
+            { id: 40, name: "糯米胀猪肠", desc: "猪肠填糯米蒸制，切片食用" },
+            { id: 41, name: "炸豆腐", desc: "普宁豆腐油炸，外酥里嫩" },
+            { id: 42, name: "蚝爽", desc: "蚝仔煮芡汁，滑嫩鲜美" },
+            { id: 43, name: "鱼册", desc: "鱼肉泥包肉馅，卷成册状" },
+            { id: 44, name: "鱼饺", desc: "鱼肉做皮，猪肉为馅" },
+            { id: 45, name: "虾枣", desc: "虾肉马蹄剁碎，油炸成枣形" },
+            { id: 46, name: "炸鸡翅", desc: "南乳腌制，外酥里嫩多汁" },
+            { id: 47, name: "潮汕烧鹅", desc: "皮脆肉嫩，卤香入味" },
+            { id: 48, name: "潮汕白切鸡", desc: "原汁原味，皮爽肉滑" },
+            { id: 49, name: "卤水拼盘", desc: "鹅肉鹅肝豆腐蛋，卤味合集" },
+            { id: 50, name: "反沙芋", desc: "芋头炸后裹糖霜，外甜里糯" }
+        ];
+        
+        // 用户数据
+        let userVotes = JSON.parse(localStorage.getItem('foodRankings_v2')) || {};
+        
+        // 从JSON文件加载模拟数据
+        async function loadMockDataFromJSON() {
+            try {
+                const response = await fetch('users-data.json');
+                const data = await response.json();
+                userVotes = data;
+                saveData();
+                updateUserSelects();
+                showGlobalRank();
+            } catch (error) {
+                console.error('加载用户数据失败:', error);
+            }
+        }
+        
+        // 初始化（优先从JSON加载）
+        function initMockData() {
+            // 如果localStorage没有数据，从JSON加载
+            if (Object.keys(userVotes).length === 0) {
+                loadMockDataFromJSON();
+            }
+        }
+        
+        function saveData() {
+            localStorage.setItem('foodRankings_v2', JSON.stringify(userVotes));
+        }
+        
+        // ==================== 页面初始化 ====================
+        
+        async function init() {
+            renderRankingList();
+            await loadMockDataFromJSON();
+            updateUserSelects();
+            showGlobalRank();
+        }
+        
+        // 渲染排名输入列表
+        function renderRankingList() {
+            const list = document.getElementById('rankingList');
+            list.innerHTML = foodData.map(food => `
+                <div class="ranking-item">
+                    <div class="item-number">${food.id}</div>
+                    <div class="item-info">
+                        <div class="item-name">
+                            <a href="detail.html?id=${food.id}" style="color:inherit;text-decoration:none;" onclick="event.stopPropagation()">${food.name}</a>
+                            <a href="detail.html?id=${food.id}" style="color:#D2691E;font-size:0.75rem;margin-left:0.5rem;text-decoration:none;" onclick="event.stopPropagation()">📖</a>
+                        </div>
+                        <div class="item-desc">${food.desc}</div>
+                    </div>
+                    <input type="number" 
+                           class="rank-input" 
+                           id="rank-${food.id}" 
+                           min="1" 
+                           max="50" 
+                           placeholder="排名"
+                           onchange="validateInput(${food.id})">
+                </div>
+            `).join('');
+        }
+        
+        // 验证输入
+        function validateInput(id) {
+            const input = document.getElementById(`rank-${id}`);
+            const value = parseInt(input.value);
+            
+            if (value < 1 || value > 50 || isNaN(value)) {
+                input.classList.add('error');
+                return false;
+            }
+            
+            // 检查重复
+            const allInputs = document.querySelectorAll('.rank-input');
+            let duplicate = false;
+            allInputs.forEach(inp => {
+                if (inp.id !== `rank-${id}` && parseInt(inp.value) === value) {
+                    duplicate = true;
+                }
+            });
+            
+            if (duplicate) {
+                input.classList.add('error');
+            } else {
+                input.classList.remove('error');
+            }
+            
+            return !duplicate;
+        }
+        
+        // ==================== 投票功能 ====================
+        
+        function submitVote() {
+            const username = document.getElementById('username').value.trim();
+            const errorMsg = document.getElementById('errorMsg');
+            
+            if (!username) {
+                errorMsg.textContent = '请输入你的昵称';
+                errorMsg.classList.add('show');
+                return;
+            }
+            
+            const votes = {};
+            const usedRanks = [];
+            
+            for (let food of foodData) {
+                const rank = parseInt(document.getElementById(`rank-${food.id}`).value);
+                
+                if (!rank || rank < 1 || rank > 50) {
+                    errorMsg.textContent = `请为「${food.name}」输入有效的排名（1-50）`;
+                    errorMsg.classList.add('show');
+                    return;
+                }
+                
+                if (usedRanks.includes(rank)) {
+                    errorMsg.textContent = `排名 ${rank} 被重复使用了，请检查`;
+                    errorMsg.classList.add('show');
+                    return;
+                }
+                
+                usedRanks.push(rank);
+                votes[food.id] = rank;
+            }
+            
+            // 保存投票
+            userVotes[username] = {
+                votes: votes,
+                time: new Date().toLocaleString('zh-CN')
+            };
+            saveData();
+            
+            errorMsg.classList.remove('show');
+            alert('✅ 投票成功！');
+            
+            // 切换到个人排行
+            updateUserSelects();
+            document.getElementById('userSelect').value = username;
+            switchTab('personal');
+            showPersonalRank();
+        }
+        
+        function resetVote() {
+            document.getElementById('username').value = '';
+            document.querySelectorAll('.rank-input').forEach(input => {
+                input.value = '';
+                input.classList.remove('error');
+            });
+            document.getElementById('errorMsg').classList.remove('show');
+        }
+        
+        // ==================== 排行榜功能 ====================
+        
+        function updateUserSelects() {
+            const users = Object.keys(userVotes);
+            const options = users.map(u => `<option value="${u}">${u}</option>`).join('');
+            
+            document.getElementById('userSelect').innerHTML = '<option value="">请选择用户...</option>' + options;
+            document.getElementById('compareUserSelect').innerHTML = '<option value="">请选择用户...</option>' + options;
+            
+            // 更新用户列表
+            document.getElementById('userList').innerHTML = users.map(u => `
+                <div class="user-list-item">
+                    <span class="user-name">${u}</span>
+                    <span class="user-time">${userVotes[u].time}</span>
+                </div>
+            `).join('') || '<div class="empty-state">暂无用户数据</div>';
+        }
+        
+        // 个人排行
+        function showPersonalRank() {
+            const username = document.getElementById('userSelect').value;
+            const container = document.getElementById('personalResult');
+            
+            if (!username || !userVotes[username]) {
+                container.innerHTML = '<div class="empty-state"><div class="empty-state-icon">📊</div><p>请选择用户查看排行榜</p></div>';
+                return;
+            }
+            
+            const votes = userVotes[username].votes;
+            const sorted = foodData.map(food => ({
+                ...food,
+                rank: votes[food.id]
+            })).sort((a, b) => a.rank - b.rank);
+            
+            container.innerHTML = `
+                <div class="result-section fade-in">
+                    <div class="result-title">👤 ${username} 的个人排行榜</div>
+                    ${sorted.map((item, idx) => `
+                        <div class="rank-result-item ${idx < 3 ? 'top3' : ''}" onclick="location.href='detail.html?id=${item.id}'" style="cursor:pointer;">
+                            <div class="rank-number">${item.rank}</div>
+                            <div class="rank-content">
+                                <div class="rank-name">${item.name} <span style="color:#D2691E;font-size:0.8rem;">📖</span></div>
+                                <div class="rank-score">${item.desc}</div>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        }
+        
+        // 总排行榜
+        function showGlobalRank() {
+            const users = Object.keys(userVotes);
+            document.getElementById('totalUsers').textContent = users.length;
+            
+            if (users.length === 0) {
+                document.getElementById('globalResult').innerHTML = '<div class="empty-state">暂无数据</div>';
+                return;
+            }
+            
+            // 计算平均排名
+            const avgRanks = {};
+            foodData.forEach(food => {
+                let total = 0;
+                users.forEach(u => {
+                    total += userVotes[u].votes[food.id];
+                });
+                avgRanks[food.id] = {
+                    ...food,
+                    avg: (total / users.length).toFixed(2),
+                    total: total
+                };
+            });
+            
+            // 排序（平均排名越小越好）
+            const sorted = Object.values(avgRanks).sort((a, b) => a.avg - b.avg);
+            
+            // 更新统计
+            document.getElementById('avgRank').textContent = (sorted.reduce((s, i) => s + parseFloat(i.avg), 0) / 50).toFixed(1);
+            document.getElementById('topVoted').textContent = sorted[0].name;
+            
+            // 渲染
+            document.getElementById('globalResult').innerHTML = sorted.map((item, idx) => `
+                <div class="rank-result-item ${idx < 3 ? 'top3' : ''}" onclick="location.href='detail.html?id=${item.id}'" style="cursor:pointer;">
+                    <div class="rank-number">${idx + 1}</div>
+                    <div class="rank-content">
+                        <div class="rank-name">${item.name} <span style="color:#D2691E;font-size:0.8rem;">📖</span></div>
+                        <div class="rank-score">平均排名: ${item.avg}分 | 总积分: ${item.total}</div>
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        // 对比功能
+        function showCompare() {
+            const username = document.getElementById('compareUserSelect').value;
+            const container = document.getElementById('compareResult');
+            
+            if (!username || !userVotes[username]) {
+                container.innerHTML = '<div class="empty-state"><div class="empty-state-icon">🆚</div><p>请选择用户进行对比</p></div>';
+                return;
+            }
+            
+            // 计算总排行
+            const users = Object.keys(userVotes);
+            const avgRanks = {};
+            foodData.forEach(food => {
+                let total = 0;
+                users.forEach(u => {
+                    total += userVotes[u].votes[food.id];
+                });
+                avgRanks[food.id] = (total / users.length);
+            });
+            
+            // 排序得到总排行位置
+            const globalSorted = [...foodData].sort((a, b) => avgRanks[a.id] - avgRanks[b.id]);
+            const globalRankMap = {};
+            globalSorted.forEach((food, idx) => {
+                globalRankMap[food.id] = idx + 1;
+            });
+            
+            // 个人排行
+            const personalVotes = userVotes[username].votes;
+            
+            // 计算差异
+            const compareData = foodData.map(food => ({
+                ...food,
+                personalRank: personalVotes[food.id],
+                globalRank: globalRankMap[food.id],
+                diff: personalVotes[food.id] - globalRankMap[food.id]
+            })).sort((a, b) => Math.abs(b.diff) - Math.abs(a.diff));
+            
+            container.innerHTML = `
+                <div class="info-card">
+                    <strong>📊 对比说明：</strong>正数表示你比大众排名低（不喜欢），负数表示你比大众排名高（更喜欢）
+                </div>
+                <div class="result-section fade-in">
+                    <div class="result-title">🆚 ${username} vs 大众口味</div>
+                    ${compareData.map(item => {
+                        const diffClass = item.diff > 0 ? 'compare-global' : (item.diff < 0 ? 'compare-personal' : '');
+                        const diffText = item.diff > 0 ? `+${item.diff}` : item.diff;
+                        return `
+                        <div class="compare-item" onclick="location.href='detail.html?id=${item.id}'" style="cursor:pointer;">
+                            <div class="compare-header">
+                                <span class="compare-name">${item.name} <span style="color:#D2691E;font-size:0.8rem;">📖</span></span>
+                                <span class="compare-ranks">
+                                    <span class="compare-personal">你: #${item.personalRank}</span>
+                                    <span class="compare-global">大众: #${item.globalRank}</span>
+                                    <span style="color:${item.diff > 0 ? '#e74c3c' : (item.diff < 0 ? '#27ae60' : '#999')}">差异: ${diffText}</span>
+                                </span>
+                            </div>
+                            <div class="compare-bar">
+                                <div class="compare-bar-fill personal" style="width:${(51-item.personalRank)/50*100}%"></div>
+                            </div>
+                            <div class="compare-bar" style="margin-top:4px;">
+                                <div class="compare-bar-fill global" style="width:${(51-item.globalRank)/50*100}%"></div>
+                            </div>
+                            <div style="display:flex;justify-content:space-between;font-size:0.75rem;color:#999;margin-top:2px;">
+                                <span>你的偏好</span>
+                                <span>大众偏好</span>
+                            </div>
+                        </div>
+                    `}).join('')}
+                </div>
+            `;
+        }
+        
+        // ==================== 标签页切换 ====================
+        
+        function switchTab(tabId) {
+            // 切换标签
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            // 切换内容
+            document.querySelectorAll('.content').forEach(c => c.classList.remove('active'));
+            document.getElementById(tabId).classList.add('active');
+            
+            // 刷新数据
+            if (tabId === 'global') {
+                showGlobalRank();
+            } else if (tabId === 'personal') {
+                showPersonalRank();
+            } else if (tabId === 'compare') {
+                showCompare();
+            }
+        }
+        
+        // 启动
+        init();
+    </script>
+</body>
+</html>
